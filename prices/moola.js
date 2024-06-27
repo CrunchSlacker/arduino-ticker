@@ -1,6 +1,7 @@
+import 'dotenv/config';
 import { restClient } from "@polygon.io/client-js";
 import { SerialPort } from "serialport";
-const rest = restClient("AowJMZoOhGI04pvMp3kZn4G31usP9yID");
+const rest = restClient(process.env.POLYGON_API);
 
 // Find the serial port
 //   SerialPort.list().then((ports) => {
