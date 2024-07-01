@@ -3,7 +3,47 @@
 #include <Servo.h>
 
 LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
-Servo servoOne;
+Servo servoHundreds, servoTens, servoOnes, servoTenths, servoHundredths;
+
+struct placeValue
+{
+  int hundreds;
+  int tens;
+  int ones;
+  int tenths;
+  int hundredths;
+};
+
+String getTicker()
+{
+  String ticker = Serial.readStringUntil('$');
+  ticker.trim();
+
+  return ticker;
+}
+
+String getPrice()
+{
+  String price = Serial.readString();
+  price.trim();
+
+  return price;
+}
+
+placeValue setAngles(String price)
+{
+  struct placeValue angle;
+
+  angle.hundreds = map(String(price[0]).toInt(), 0, 9, 0, 179);
+  angle.tens = map(String(price[1]).toInt(), 0, 9, 0, 179);
+  angle.ones = map(String(price[2]).toInt(), 0, 9, 0, 179);
+  angle.tenths = map(String(price[4]).toInt(), 0, 9, 0, 179);
+  angle.hundredths = map(String(price[5]).toInt(), 0, 9, 0, 179);
+
+  return angle;
+}
+
+void turnServos(placeValue angle);
 
 void setup()
 {
@@ -11,7 +51,7 @@ void setup()
   Serial.begin(9600);
   lcd.begin(16, 2);
   lcd.clear();
-  servoOne.attach(13);
+  servoHundreds.attach(13);
 }
 
 void loop()
@@ -19,18 +59,18 @@ void loop()
   // put your main code here, to run repeatedly:
   if (Serial.available() > 0)
   {
-    String data = Serial.readStringUntil('$');
-    data.trim();
+    String ticker = getTicker();
 
-    String num = Serial.readString();
-    num.trim();
+    String price = getPrice();
 
-    int hundreds = String(num[0]).toInt();
-    int hundredsAngle = map(hundreds, 0, 9, 0, 179);
-    Serial.print(hundredsAngle);
-    servoOne.write(hundredsAngle);
-    
     lcd.clear();
-    lcd.print(num);
+    lcd.print(ticker + " $" + price);
+
+    struct placeValue angle = setAngles(price);
+    turnServos(angle);
   }
+}
+
+void turnServos(placeValue angle) {
+  servoHundreds.write(angle.hundreds);
 }
