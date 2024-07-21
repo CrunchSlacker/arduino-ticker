@@ -15,12 +15,12 @@ const port = new SerialPort({
 });
 
 async function getInfo() {
-  const data = await rest.stocks.aggregates(
-    "COST",
+  const data = await rest.stocks.aggregates( 
+    "NVDA",
     "1",
     "minute",
-    "2024-06-27",
-    "2024-06-28",
+    "2024-07-18",
+    "2024-07-19",
     { sort: "desc", limit: "5" }
   );
   console.log(data);
@@ -64,4 +64,3 @@ async function formatPrice(price) {
 }
 
 main();
-
