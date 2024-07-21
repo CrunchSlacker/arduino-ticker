@@ -1,9 +1,11 @@
 #include <Arduino.h>
 #include <LiquidCrystal.h>
-#include <Servo.h>
+// #include <Servo.h>
+#include <VarSpeedServo.h>
 
-LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
-Servo servoHundreds, servoTens, servoOnes, servoTenths, servoHundredths;
+// LiquidCrystal lcd(12, 11, 5, 4, 3, 2);x
+
+VarSpeedServo servoHundreds;
 
 struct placeValue
 {
@@ -34,7 +36,7 @@ placeValue setAngles(String price)
 {
   struct placeValue angle;
 
-  angle.hundreds = map(String(price[0]).toInt(), 0, 9, 0, 179);
+  angle.hundreds = map(String(price[0]).toInt(), 0, 9, 0, 180);
   angle.tens = map(String(price[1]).toInt(), 0, 9, 0, 179);
   angle.ones = map(String(price[2]).toInt(), 0, 9, 0, 179);
   angle.tenths = map(String(price[4]).toInt(), 0, 9, 0, 179);
@@ -49,8 +51,8 @@ void setup()
 {
   // put your setup code here, to run once:
   Serial.begin(9600);
-  lcd.begin(16, 2);
-  lcd.clear();
+  // lcd.begin(16, 2);
+  // lcd.clear();
   servoHundreds.attach(13);
 }
 
@@ -63,14 +65,23 @@ void loop()
 
     String price = getPrice();
 
-    lcd.clear();
-    lcd.print(ticker + " $" + price);
-
     struct placeValue angle = setAngles(price);
     turnServos(angle);
   }
 }
 
-void turnServos(placeValue angle) {
-  servoHundreds.write(angle.hundreds);
+void turnServos(placeValue angle)
+{
+
+  int servoAngle = servoHundreds.read();
+  if (angle.hundreds >= 80)
+  {
+    angle.hundreds = angle.hundreds - 10;
+  }
+  else if (servoAngle > angle.hundreds)
+  {
+    angle.hundreds = angle.hundreds - 10;
+  }
+
+  servoHundreds.write(angle.hundreds, 124, true);
 }
