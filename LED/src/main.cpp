@@ -5,7 +5,7 @@
 
 // LiquidCrystal lcd(12, 11, 5, 4, 3, 2);x
 
-VarSpeedServo servoHundreds;
+VarSpeedServo servoHundreds, servoTens;
 
 struct placeValue
 {
@@ -37,7 +37,7 @@ placeValue setAngles(String price)
   struct placeValue angle;
 
   angle.hundreds = map(String(price[0]).toInt(), 0, 9, 0, 180);
-  angle.tens = map(String(price[1]).toInt(), 0, 9, 0, 179);
+  angle.tens = map(String(price[1]).toInt(), 0, 9, 0, 175);
   angle.ones = map(String(price[2]).toInt(), 0, 9, 0, 179);
   angle.tenths = map(String(price[4]).toInt(), 0, 9, 0, 179);
   angle.hundredths = map(String(price[5]).toInt(), 0, 9, 0, 179);
@@ -54,6 +54,7 @@ void setup()
   // lcd.begin(16, 2);
   // lcd.clear();
   servoHundreds.attach(13);
+  servoTens.attach(12);
 }
 
 void loop()
@@ -73,15 +74,16 @@ void loop()
 void turnServos(placeValue angle)
 {
 
-  int servoAngle = servoHundreds.read();
+  int servoAngleHundreds = servoHundreds.read();
   if (angle.hundreds >= 80)
   {
     angle.hundreds = angle.hundreds - 10;
   }
-  else if (servoAngle > angle.hundreds)
+  else if (servoAngleHundreds > angle.hundreds)
   {
     angle.hundreds = angle.hundreds - 10;
   }
 
   servoHundreds.write(angle.hundreds, 124, true);
+  servoTens.write(angle.tens, 124, true);
 }
