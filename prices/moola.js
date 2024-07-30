@@ -1,9 +1,17 @@
 import "dotenv/config";
 import { restClient } from "@polygon.io/client-js";
 import { SerialPort } from "serialport";
-const rest = restClient(process.env.POLYGON_API);
+import {
+  intro,
+  outro,
+  text,
+  spinner,
+  isCancel,
+  cancel,
+  select,
+} from "@clack/prompts";
 
-import { intro, outro, text, confirm, spinner } from "@clack/prompts";
+const rest = restClient(process.env.POLYGON_API);
 
 // Find the serial port
 //   SerialPort.list().then((ports) => {
@@ -17,21 +25,43 @@ const port = new SerialPort({
 });
 
 async function getInfo(ticker) {
-  const lastPrice = await rest.stocks.previousClose(ticker);
-  return lastPrice.results[0].c;
+  try {
+    const lastPrice = await rest.stocks.previousClose(ticker);
+    return lastPrice.results[0].c;
+  } catch (error) {
+    return false;
+  }
 }
 
 async function getUserTicker() {
-  const ticker = await text({
-    message: "Enter a ticker: ",
-    placeholder: "QQQ",
-    defaultValue: "QQQ",
-    validate(value) {
-      if (value.length === 0 || value.length > 4) {
-        return "Invalid Ticker";
-      }
-    },
-  });
+  let ticker;
+  let valid = false;
+
+  while (!valid) {
+    ticker = await text({
+      message: "Enter a ticker: ",
+      placeholder: "QQQ",
+      defaultValue: "QQQ",
+    });
+
+    if (isCancel(ticker)) {
+      cancel("Cancelled");
+      process.exit(0);
+    }
+
+    const s = spinner();
+    s.start("Validating Ticker");
+
+    const stockInfo = await getInfo(ticker);
+
+    if (stockInfo === false) {
+      s.stop("Invalid Ticker. Please try again.");
+    } else {
+      valid = true;
+      s.stop("Validated");
+    }
+  }
+
   return ticker;
 }
 
@@ -43,7 +73,7 @@ async function main() {
   const formatedPrice = await formatPrice(stockInfo);
   const s = spinner();
   s.start("Sending Ticker");
-  port.write(stockInfo.ticker + ": $" + formatedPrice);
+  port.write(ticker + ": $" + formatedPrice);
   s.stop("Ticker Sent");
 }
 
@@ -52,7 +82,7 @@ async function formatPrice(price) {
 
   let arrayPrice = [];
 
-  //Pushes all numbers before "." to array
+  // Pushes all numbers before "." to array
   for (let i = 0; i < stockPrice.length; i++) {
     if (stockPrice[i] !== ".") {
       arrayPrice.push(stockPrice[i]);
@@ -61,20 +91,24 @@ async function formatPrice(price) {
     }
   }
 
-  //Adds zeros to fill in space, example: format 00#.##
+  // Adds zeros to fill in space, example: format 00#.##
   let howManyZeros = 3 - arrayPrice.length;
   for (let i = 0; i < howManyZeros; i++) {
     arrayPrice.unshift(0);
   }
 
-  //Returns formatted price
+  // Returns formatted price
   return arrayPrice.join("") + stockPrice.slice(stockPrice.indexOf("."));
 }
 
 intro("Edit Ticker");
+
 while (true) {
   await main();
-  let cont = await confirm({ message: "Send another ticker?" });
+  const cont = await select({
+    message: "What's next?",
+    options: [{value: true, label: "Change Ticker"}, {value: false, label: "Exit"}]
+  })
   if (!cont) {
     outro("Goodbye");
     process.exit(0);
