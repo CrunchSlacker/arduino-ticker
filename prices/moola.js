@@ -42,6 +42,11 @@ async function getUserTicker() {
       message: "Enter a ticker: ",
       placeholder: "QQQ",
       defaultValue: "QQQ",
+      validate(value) {
+        if (value.length === 0 || value.length > 4) {
+          return "Invalid Ticker. Please Try Again";
+        }
+      },
     });
 
     if (isCancel(ticker)) {
@@ -55,7 +60,7 @@ async function getUserTicker() {
     const stockInfo = await getInfo(ticker);
 
     if (stockInfo === false) {
-      s.stop("Invalid Ticker. Please try again.");
+      s.stop("Invalid Ticker. Please try again");
     } else {
       valid = true;
       s.stop("Validated");
@@ -107,8 +112,11 @@ while (true) {
   await main();
   const cont = await select({
     message: "What's next?",
-    options: [{value: true, label: "Change Ticker"}, {value: false, label: "Exit"}]
-  })
+    options: [
+      { value: true, label: "Change Ticker" },
+      { value: false, label: "Exit" },
+    ],
+  });
   if (!cont) {
     outro("Goodbye");
     process.exit(0);
