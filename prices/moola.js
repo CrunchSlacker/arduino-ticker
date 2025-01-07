@@ -19,7 +19,7 @@ const rest = restClient(process.env.POLYGON_API);
 //   });
 
 const port = new SerialPort({
-  path: "COM4",
+  path: "COM5",
   baudRate: 9600,
   autoOpen: true,
 });
@@ -57,6 +57,7 @@ async function getUserTicker() {
     const s = spinner();
     s.start("Validating Ticker");
 
+    console.log(ticker);
     const stockInfo = await getInfo(ticker);
 
     if (stockInfo === false) {
@@ -120,5 +121,7 @@ while (true) {
   if (!cont) {
     outro("Goodbye");
     process.exit(0);
+  } else {
+    continue;
   }
 }
